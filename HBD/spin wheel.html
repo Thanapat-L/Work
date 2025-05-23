@@ -1,0 +1,294 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Spinning Wheel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .wheel-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto;
+        }
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            transition: none; /* We'll handle animation with JS for more control */
+        }
+        
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .section-text {
+            position: absolute;
+            transform-origin: center;
+            font-weight: bold;
+            text-align: center;
+            width: 100px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+        
+        .spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 25px solid #ff3a3a;
+            z-index: 11;
+        }
+        
+        .spin-button {
+            transition: all 0.3s ease;
+        }
+        
+        .spin-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .spin-button:active {
+            transform: scale(0.95);
+        }
+        
+        .result-display {
+            height: 60px;
+            transition: all 0.5s ease;
+        }
+        
+        /* Add tick marks around the wheel */
+        .tick-container {
+            position: absolute;
+            width: 380px;
+            height: 380px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .tick {
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.7);
+            transform-origin: center bottom;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.16 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.mb-2{margin-bottom:0.5rem}.mb-8{margin-bottom:2rem}.mt-6{margin-top:1.5rem}.flex{display:flex}.w-full{width:100%}.max-w-md{max-width:28rem}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-opacity-20{--tw-bg-opacity:0.2}.p-4{padding:1rem}.px-8{padding-left:2rem;padding-right:2rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.text-center{text-align:center}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.text-indigo-600{--tw-text-opacity:1;color:rgb(79 70 229 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.opacity-80{opacity:0.8}.opacity-50{opacity:0.5}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.hover\:bg-indigo-100:hover{--tw-bg-opacity:1;background-color:rgb(224 231 255 / var(--tw-bg-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}</style></head>
+<body class="flex flex-col items-center justify-center p-4">
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-white mb-2">Spinning Wheel</h1>
+        <p class="text-xl text-white opacity-80">Click the button for a realistic spin!</p>
+    </div>
+    
+    <div class="wheel-container mb-8">
+        <div class="tick-container" id="tickContainer"><div class="tick" style="transform: rotate(0deg) translateX(190px);"></div><div class="tick" style="transform: rotate(10deg) translateX(190px);"></div><div class="tick" style="transform: rotate(20deg) translateX(190px);"></div><div class="tick" style="transform: rotate(30deg) translateX(190px);"></div><div class="tick" style="transform: rotate(40deg) translateX(190px);"></div><div class="tick" style="transform: rotate(50deg) translateX(190px);"></div><div class="tick" style="transform: rotate(60deg) translateX(190px);"></div><div class="tick" style="transform: rotate(70deg) translateX(190px);"></div><div class="tick" style="transform: rotate(80deg) translateX(190px);"></div><div class="tick" style="transform: rotate(90deg) translateX(190px);"></div><div class="tick" style="transform: rotate(100deg) translateX(190px);"></div><div class="tick" style="transform: rotate(110deg) translateX(190px);"></div><div class="tick" style="transform: rotate(120deg) translateX(190px);"></div><div class="tick" style="transform: rotate(130deg) translateX(190px);"></div><div class="tick" style="transform: rotate(140deg) translateX(190px);"></div><div class="tick" style="transform: rotate(150deg) translateX(190px);"></div><div class="tick" style="transform: rotate(160deg) translateX(190px);"></div><div class="tick" style="transform: rotate(170deg) translateX(190px);"></div><div class="tick" style="transform: rotate(180deg) translateX(190px);"></div><div class="tick" style="transform: rotate(190deg) translateX(190px);"></div><div class="tick" style="transform: rotate(200deg) translateX(190px);"></div><div class="tick" style="transform: rotate(210deg) translateX(190px);"></div><div class="tick" style="transform: rotate(220deg) translateX(190px);"></div><div class="tick" style="transform: rotate(230deg) translateX(190px);"></div><div class="tick" style="transform: rotate(240deg) translateX(190px);"></div><div class="tick" style="transform: rotate(250deg) translateX(190px);"></div><div class="tick" style="transform: rotate(260deg) translateX(190px);"></div><div class="tick" style="transform: rotate(270deg) translateX(190px);"></div><div class="tick" style="transform: rotate(280deg) translateX(190px);"></div><div class="tick" style="transform: rotate(290deg) translateX(190px);"></div><div class="tick" style="transform: rotate(300deg) translateX(190px);"></div><div class="tick" style="transform: rotate(310deg) translateX(190px);"></div><div class="tick" style="transform: rotate(320deg) translateX(190px);"></div><div class="tick" style="transform: rotate(330deg) translateX(190px);"></div><div class="tick" style="transform: rotate(340deg) translateX(190px);"></div><div class="tick" style="transform: rotate(350deg) translateX(190px);"></div></div>
+        <div class="wheel" id="wheel" style="transform: rotate(11604.4deg);">
+            <div class="wheel-section" style="background-color: rgb(255, 107, 107); transform: rotate(0deg) skewY(45deg);">
+                <div class="section-text" style="transform: rotate(-22.5deg) translate(80px) rotate(90deg);">Red</div>
+            </div>
+            <div class="wheel-section" style="background-color: rgb(78, 205, 196); transform: rotate(45deg) skewY(45deg);">
+                <div class="section-text" style="transform: rotate(-67.5deg) translate(80px) rotate(90deg);">Teal</div>
+            </div><div class="wheel-section" style="background-color: rgb(255, 209, 102); transform: rotate(90deg) skewY(45deg);">
+                <div class="section-text" style="transform: rotate(-112.5deg) translate(80px) rotate(90deg);">Yellow</div>
+            </div>
+            <div class="wheel-section" style="background-color: rgb(106, 5, 114); transform: rotate(135deg) skewY(45deg);">
+                <div class="section-text" style="transform: rotate(-157.5deg) translate(80px) rotate(90deg);">Purple</div>
+            </div>
+            <div class="wheel-section" style="background-color: rgb(26, 147, 111); transform: rotate(180deg) skewY(45deg);">
+                <div class="section-text" style="transform: rotate(-202.5deg) translate(80px) rotate(90deg);">Green</div>
+            </div>
+            <div class="wheel-section" style="background-color: rgb(61, 90, 128); transform: rotate(225deg) skewY(45deg);">
+                <div class="section-text" style="transform: rotate(-247.5deg) translate(80px) rotate(90deg);">Blue</div>
+            </div>
+            <div class="wheel-section" style="background-color: rgb(241, 143, 1); transform: rotate(270deg) skewY(45deg);">
+                <div class="section-text" style="transform: rotate(-292.5deg) translate(80px) rotate(90deg);">Orange</div>
+            </div>
+            <div class="wheel-section" style="background-color: rgb(197, 216, 109); transform: rotate(315deg) skewY(45deg);">
+                <div class="section-text" style="transform: rotate(-337.5deg) translate(80px) rotate(90deg);">Lime</div>
+            </div>
+        </div>
+        <div class="spinner">
+            <div class="pointer"></div>
+        </div>
+    </div>
+    
+    <button id="spinButton" class="spin-button bg-white text-indigo-600 font-bold py-3 px-8 rounded-full text-xl shadow-lg hover:bg-indigo-100 focus:outline-none">
+        SPIN
+    </button>
+    
+    <div class="result-display mt-6 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 w-full max-w-md text-center">
+        <p class="text-white text-xl font-medium" id="result">You landed on: Lime!</p>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const wheel = document.getElementById('wheel');
+            const spinButton = document.getElementById('spinButton');
+            const resultDisplay = document.getElementById('result');
+            const tickContainer = document.getElementById('tickContainer');
+            
+            // Define sections with colors and labels
+            const sections = [
+                { color: '#FF6B6B', label: 'Red' },
+                { color: '#4ECDC4', label: 'Teal' },
+                { color: '#FFD166', label: 'Yellow' },
+                { color: '#6A0572', label: 'Purple' },
+                { color: '#1A936F', label: 'Green' },
+                { color: '#3D5A80', label: 'Blue' },
+                { color: '#F18F01', label: 'Orange' },
+                { color: '#C5D86D', label: 'Lime' }
+            ];
+            
+            // Create wheel sections
+            createWheel(sections);
+            
+            // Create tick marks
+            createTicks(36); // 36 ticks for a nice distribution
+            
+            // Spin functionality
+            let canSpin = true;
+            let currentRotation = 0;
+            let animationId = null;
+            
+            spinButton.addEventListener('click', function() {
+                if (!canSpin) return;
+
+                canSpin = false;
+                spinButton.disabled = true;
+                spinButton.classList.add('opacity-50');
+                resultDisplay.textContent = "Spinning...";
+
+                // Cancel any existing animation
+                if (animationId !== null) {
+                    cancelAnimationFrame(animationId);
+                }
+
+                // Initial speed (degrees per frame)
+                let speed = 20;
+
+                // Random number of full rotations
+                const minRotations = 3;
+                const maxRotations = 6;
+                const sectionAngle = 360 / sections.length;
+                const randomSection = Math.floor(Math.random() * sections.length);
+
+                // Align to center of target section
+                const targetAngle = currentRotation +
+                    (Math.random() * sectionAngle * 0.2 - sectionAngle * 0.1) + // slight randomness
+                    (randomSection * sectionAngle + sectionAngle / 2) + // center of section
+                    (Math.floor(Math.random() * (maxRotations - minRotations + 1)) + minRotations) * 360;
+
+                const decelStart = 300; // start decelerating this many degrees before target
+                const decelRate = speed / decelStart;
+
+                // Animation loop
+                function animate() {
+                    const distanceToTarget = targetAngle - currentRotation;
+
+                    if (distanceToTarget <= 0.5) {
+                        const normalizedRotation = currentRotation % 360;
+                        const pointerAngle = (360 - normalizedRotation + sectionAngle / 2) % 360;
+                        const sectionIndex = Math.round(pointerAngle / sectionAngle) % sections.length;
+
+                        resultDisplay.textContent = `You landed on: ${sections[sectionIndex].label}!`;
+
+                        canSpin = true;
+                        spinButton.disabled = false;
+                        spinButton.classList.remove('opacity-50');
+                        return;
+                    }
+
+                    if (distanceToTarget < decelStart) {
+                        speed = Math.max(0.5, distanceToTarget * decelRate);
+                    }
+
+                    currentRotation += speed;
+                    wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+                    animationId = requestAnimationFrame(animate);
+                }
+
+                animationId = requestAnimationFrame(animate);
+            });
+            
+            function createWheel(sections) {
+    const totalWeight = sections.reduce((sum, section) => sum + section.weight, 0);
+    let currentAngle = 0;
+
+    sections.forEach(section => {
+        const sectionAngle = (section.weight / totalWeight) * 360;
+
+        const sectionElement = document.createElement('div');
+        sectionElement.className = 'wheel-section';
+        sectionElement.style.backgroundColor = section.color;
+        sectionElement.style.transform = `rotate(${currentAngle}deg) skewY(${90 - sectionAngle}deg)`;
+
+        const textElement = document.createElement('div');
+        textElement.className = 'section-text';
+        textElement.textContent = section.label;
+
+        const textRotation = -(currentAngle + sectionAngle / 2);
+        textElement.style.transform = `rotate(${textRotation}deg) translate(80px) rotate(90deg)`;
+
+        sectionElement.appendChild(textElement);
+        wheel.appendChild(sectionElement);
+
+        currentAngle += sectionAngle;
+    });
+}
+
+            
+            function createTicks(count) {
+                const angleStep = 360 / count;
+                
+                for (let i = 0; i < count; i++) {
+                    const tick = document.createElement('div');
+                    tick.className = 'tick';
+                    tick.style.transform = `rotate(${i * angleStep}deg) translateX(190px)`;
+                    tickContainer.appendChild(tick);
+                }
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'943a9fe8c61ea1ba',t:'MTc0Nzg5OTE5OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><iframe height="1" width="1" style="position: absolute; top: 0px; left: 0px; border: none; visibility: hidden;"></iframe>
+</body></html>
