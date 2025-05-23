@@ -1,0 +1,816 @@
+{
+  "name": "n8n AI chat bot with image response",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nI'm your Helpdesk assistance. How can I help you today?",
+        "options": {}
+      },
+      "id": "29a7ca14-2ee0-47d4-9d1f-42fb47e4439e",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        560,
+        -140
+      ],
+      "webhookId": "53c136fe-3e77-4709-a143-fe82746dd8b6",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a SQL Server expert.\n\nOnly use the following schema to select valid tables and columns:\n{{ $('Code1').item.json.schemaText }}\n\nUse exact table and column names only from the schema above. Do not guess or invent any.\n\nThe database is running Microsoft SQL Server 2008. Always use CONVERT instead of FORMAT.\n\n❗ Do not use subqueries inside aggregate functions. Instead, use JOINs.\n\nReturn only a single valid SQL query. Do not explain or format it.\n\nNow generate a SQL query for this request:\n",
+              "role": "system"
+            },
+            {
+              "content": "={{ $node[\"When chat message received\"].json[\"chatInput\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1760,
+        -300
+      ],
+      "id": "3e22ee48-cf81-4e20-9da4-261e403da71d",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "Tzp0z4DcoKmAmbHE",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TABLE_NAME, COLUMN_NAME \nFROM INFORMATION_SCHEMA.COLUMNS \nWHERE TABLE_SCHEMA = 'dbo'"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        740,
+        -140
+      ],
+      "id": "1f4775b8-eb0c-4c91-9354-81b0cf7bfef8",
+      "name": "Microsoft SQL",
+      "credentials": {
+        "microsoftSql": {
+          "id": "bmwr7HXPfz9h982G",
+          "name": "Helpdesk"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "af244f1d-3f06-4cd2-be80-c9e59b2990b2",
+              "name": "TABLE_NAME",
+              "value": "={{ $json.TABLE_NAME }}",
+              "type": "string"
+            },
+            {
+              "id": "7788b93c-9e02-4d9b-9abc-943ff0e5ac9d",
+              "name": "COLUMN_NAME",
+              "value": "={{ $json.COLUMN_NAME }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        -140
+      ],
+      "id": "33ab2873-cc6b-4298-968d-ee0334def110",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const schema = {};\n\nitems.forEach(item => {\n  const table = item.json.TABLE_NAME;\n  const column = item.json.COLUMN_NAME;\n\n  if (!schema[table]) {\n    schema[table] = [];\n  }\n\n  schema[table].push(column);\n});\n\nreturn [{\n  json: {\n    schema: schema\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        -140
+      ],
+      "id": "f4b9dad3-f84a-47de-9e35-4d3e3c89c620",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "const schema = $json.schema;\nlet output = '';\n\nfor (const table in schema) {\n  output += `Table: ${table}\\n`;\n  schema[table].forEach(col => {\n    output += `  - ${col}\\n`;\n  });\n  output += '\\n';\n}\n\nreturn [{ json: { schemaText: output } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        -140
+      ],
+      "id": "1cea478e-fa36-479f-89be-0847f3e4d02f",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b5c8c749-c59c-43b3-8da8-243f0c6446d7",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "SELECT ",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2100,
+        -160
+      ],
+      "id": "95c91cd6-9c3f-4255-8341-98fdefd83852",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $node[\"When chat message received\"].json[\"chatInput\"] }}\n\nanswer normally like a chat",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        1760,
+        40
+      ],
+      "id": "f22ca857-b8df-4897-833e-f467b8184958",
+      "name": "AI Agent1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "gpt-3.5-turbo"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1740,
+        240
+      ],
+      "id": "1614f425-6d6b-47f1-886e-6aea1f3394f3",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "Tzp0z4DcoKmAmbHE",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Determine whether the following message is a question related to the database schema provided below.\n\nSchema:\n{{ $json.schemaText }}\n\nMessage:\n{{ $node[\"When chat message received\"].json[\"chatInput\"] }}\n\nReturn only `true` if the message is related to the schema.\nReturn only `false` if it is not.\nDo not explain — respond with only the word: true or false.\n",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1320,
+        -140
+      ],
+      "id": "9e00efec-3cfc-4b4d-8d6a-4746ab4a5ea8",
+      "name": "OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "Tzp0z4DcoKmAmbHE",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ece6387e-bc73-4aeb-add1-e465b8a18b3c",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1640,
+        -140
+      ],
+      "id": "35154842-158a-4df9-97a8-45d01caf7814",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{$json[\"chatId\"]}} ",
+        "contextWindowLength": 500000
+      },
+      "id": "e51e3524-d330-406f-a826-084232712a6f",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        1880,
+        240
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.message.content.match(/```sql\\s*([\\s\\S]*?)```/)?.[1].trim() || '' }}\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        2320,
+        -80
+      ],
+      "id": "e6999e7a-1a28-4d03-b8a6-245f84764aed",
+      "name": "Microsoft SQL2",
+      "credentials": {
+        "microsoftSql": {
+          "id": "bmwr7HXPfz9h982G",
+          "name": "Helpdesk"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.message.content}}\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        2320,
+        -220
+      ],
+      "id": "9bdd9c18-8811-4450-af3d-0eeabdc0dccf",
+      "name": "Microsoft SQL1",
+      "credentials": {
+        "microsoftSql": {
+          "id": "bmwr7HXPfz9h982G",
+          "name": "Helpdesk"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2520,
+        -140
+      ],
+      "id": "6a421802-f825-4f01-a44c-8e9d7bc1af73",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2740,
+        -40
+      ],
+      "id": "513d6c22-3dcf-416e-829a-34b15399b63b",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2740,
+        -240
+      ],
+      "id": "fc057c73-60f0-4096-8bb9-d99493135957",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "labelsMode": "array",
+        "labelsArray": "={{ $json.labels }}",
+        "data": "={{ $json.data }}",
+        "output": "=",
+        "chartOptions": {},
+        "datasetOptions": {}
+      },
+      "type": "n8n-nodes-base.quickChart",
+      "typeVersion": 1,
+      "position": [
+        3480,
+        -120
+      ],
+      "id": "e7ae8f76-e7d4-4c50-a09c-527532f95c57",
+      "name": "QuickChart"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Return a JSON object with:\n\n- labels: all the keys of the first object (or aggregated PROCESS values)\n- data: their counts\n\nFormat:\n{\n  \"labels\": [...],\n  \"data\": [...]\n}\n\nExample output:\n{\n  \"labels\": [\"WAIT_APPROVE\", \"APPROVED\", \"REJECT\"],\n  \"data\": [30, 20, 5]\n}\n\nHere is the input:\n{{ JSON.stringify($json.data, null, 2) }}\n",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2960,
+        -120
+      ],
+      "id": "616fa075-815e-41cd-a0db-64b02b621916",
+      "name": "OpenAI3",
+      "credentials": {
+        "openAiApi": {
+          "id": "Tzp0z4DcoKmAmbHE",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const parsed = JSON.parse($json.message.content);\nreturn [{\n  json: {\n    labels: parsed.labels,\n    data: parsed.data\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3280,
+        -120
+      ],
+      "id": "578c44a4-83bd-4874-9b7c-76ff6470e388",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quickchart.io/chart/create",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chart\": {\n    \"type\": \"bar\",\n    \"data\": {\n      \"labels\": [\"{{$json.labels.join(\"\\\",\\\"\")}}\"],\n      \"datasets\": [\n        {\n          \"label\": \"Ticket Count\",\n          \"data\": [\"{{$json.data.join(\"\\\",\\\"\")}}\"]\n        }\n      ]\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3560,
+        -440
+      ],
+      "id": "de70f1dd-4b22-4d40-820f-06ccf76ddf8f",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0c6c02ec-be15-4990-95ff-76f63c0971fe",
+              "name": "img",
+              "value": "=<img src=\"{{ $json.url }}\" alt=\"Chart Image\" style=\"max-width: 100%;\n  height: auto;\"/>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3780,
+        -440
+      ],
+      "id": "c5e26605-7e92-47f0-a75f-a3fe897254b2",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "=({\n  message: `Here is your chart:\\n${$json[\"url\"]}`\n})\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3700,
+        -120
+      ],
+      "id": "fb50b08e-a5a9-460f-b10f-6d13dd0b5208",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Return only this HTML and nothing else:\n{{ $json.img }}\n\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        4000,
+        -440
+      ],
+      "id": "94087d06-cfa0-437c-aa63-6e8453b7f68c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3960,
+        -200
+      ],
+      "id": "1a3b18a3-8a9a-4449-a6f0-cd59891fd77c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Tzp0z4DcoKmAmbHE",
+          "name": "OpenAi account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Microsoft SQL2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "OpenAI3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI3": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QuickChart": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "47cffcac-ca41-4d46-b54f-9f281da4467b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26a74bc05a0f48938d4721d1210f223d7de0402f654ce8967df782b7fd8fd87c"
+  },
+  "id": "o34vIhIm1P9CgnVB",
+  "tags": []
+}
